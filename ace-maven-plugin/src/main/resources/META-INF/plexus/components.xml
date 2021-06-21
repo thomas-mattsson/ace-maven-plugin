@@ -27,6 +27,29 @@
 		</component>
 		<component>
 			<role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
+			<role-hint>ace-testproj</role-hint>
+			<implementation>org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
+			</implementation>
+			<configuration>
+				<phases>
+					<generate-resources>ibm.maven.plugins:ace-maven-plugin:prepare-bar-build-workspace
+					</generate-resources>
+					<process-resources>ibm.maven.plugins:ace-maven-plugin:validate-bar-build-workspace
+					</process-resources>
+					<compile>ibm.maven.plugins:ace-maven-plugin:create-bar</compile>
+					<process-classes>ibm.maven.plugins:ace-maven-plugin:validate-configurable-properties,ibm.maven.plugins:ace-maven-plugin:clean-bar-build-workspace,ibm.maven.plugins:ace-maven-plugin:validate-classloader-approach
+					</process-classes>
+					<package>ibm.maven.plugins:ace-maven-plugin:package-ace-bar
+					</package>
+					<install>org.apache.maven.plugins:maven-install-plugin:2.4:install
+					</install>
+					<integration-test>ibm.maven.plugins:ace-maven-plugin:execute-test-project
+					</integration-test>
+				</phases>
+			</configuration>
+		</component>
+		<component>
+			<role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
 			<role-hint>ace-classloader</role-hint>
 			<implementation>org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
 			</implementation>
@@ -148,7 +171,9 @@
 								org.eclipse.tycho:tycho-packaging-plugin:0.22.0:package-plugin,
 								org.eclipse.tycho:tycho-p2-plugin:0.22.0:p2-metadata-default
 							</package>
-							<integration-test></integration-test>
+							<integration-test>
+								ibm.maven.plugins:ace-maven-plugin:execute-test-project
+							</integration-test>
 							<install>
 								org.apache.maven.plugins:maven-install-plugin:2.3.1:install,
 								org.eclipse.tycho:tycho-p2-plugin:0.22.0:update-local-index
