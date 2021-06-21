@@ -163,6 +163,7 @@ public class CreateBarMojo extends AbstractMojo {
         List<String> apps = new ArrayList<String>();
         List<String> libs = new ArrayList<String>();
         List<String> policies = new ArrayList<String>();
+        List<String> testprojects = new ArrayList<String>();
 
         // loop through the projects, adding them as "-a" Applications, "-l"
         // libraries or the deployable artefacts as "-o" objects
@@ -179,8 +180,10 @@ public class CreateBarMojo extends AbstractMojo {
             apps.add(applicationName);
         } else if (EclipseProjectUtils.isLibrary(new File(workspace, applicationName), getLog())) {
             libs.add(applicationName);
-        }else if (EclipseProjectUtils.isPolicyProject(new File(workspace, applicationName), getLog())) {
+        } else if (EclipseProjectUtils.isPolicyProject(new File(workspace, applicationName), getLog())) {
         	policies.add(applicationName);
+        } else if (EclipseProjectUtils.isTestProject(new File(workspace, applicationName), getLog())) {
+            testprojects.add(applicationName);
         }
         
         //apps.add(applicationName);
@@ -215,7 +218,11 @@ public class CreateBarMojo extends AbstractMojo {
             params.addAll(apps);
         }
 
-        
+        // if there are test projects, add them
+        if (!testprojects.isEmpty()) {
+            params.add("-t");
+            params.addAll(testprojects);
+        }
 
         // if there are libraries, add them
         if (!libs.isEmpty()) {
