@@ -18,6 +18,8 @@
 					</process-classes>
 					<package>ibm.maven.plugins:ace-maven-plugin:package-ace-bar
 					</package>
+					<integration-test>ibm.maven.plugins:ace-maven-plugin:execute-test-project
+					</integration-test>
 					<install>org.apache.maven.plugins:maven-install-plugin:2.4:install
 					</install>
 					<deploy>org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy
