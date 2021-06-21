@@ -17,7 +17,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.FileUtils;
 
-@Mojo(name = "execute-test-project", defaultPhase = LifecyclePhase.INTEGRATION_TEST)
+@Mojo(name = "execute-test-project", defaultPhase = LifecyclePhase.TEST)
 public class ExecuteTestProjectMojo extends AbstractMojo {
 
     /**
