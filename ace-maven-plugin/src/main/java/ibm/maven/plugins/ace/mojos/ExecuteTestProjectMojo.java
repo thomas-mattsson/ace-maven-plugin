@@ -124,8 +124,8 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
             if (osName.contains("windows")){
                 getLog().debug("executing command file: " + cmdFile.getAbsolutePath());
             }
-            getLog().debug("Command: " + getCommandLine(command));
         }
+        getLog().info("Command: " + getCommandLine(command));
 
         if (osName.contains("windows")){
             try {
