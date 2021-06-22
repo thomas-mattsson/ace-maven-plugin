@@ -4,7 +4,9 @@ import ibm.maven.plugins.ace.utils.EclipseProjectUtils;
 import ibm.maven.plugins.ace.utils.ProcessOutputLogger;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -48,6 +50,12 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
     @Parameter(property = "ace.aceRunDir", required = true)
     protected File aceRunDir;
 
+    /**
+     * Apply fake queue manager for tests
+     */
+    @Parameter(property = "ace.fakeQueueManager", defaultValue = "true", required = true)
+    protected Boolean fakeQueueManager;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
         
         if (EclipseProjectUtils.isTestProject(new File(workspace, applicationName), getLog())) {
@@ -55,6 +63,9 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
             try {
                 workDir = Files.createTempDirectory(applicationName);
                 createWorkDir(workDir);
+                if (fakeQueueManager) {
+                    overrideServerConf(workDir);
+                }
                 extractBarFile(workDir);
                 executeTestProject(workDir);
             } catch (IOException e) {
@@ -69,6 +80,18 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
             }
 
         }    
+    }
+
+    private void overrideServerConf(Path workDir) throws MojoFailureException {
+        try {
+            File serverConfFile = new File(workDir.toFile(), "overrides/server.conf.yaml");
+            PrintWriter out = new PrintWriter(serverConfFile);
+            out.println("defaultQueueManager: 'fakeQueueManager'");
+            out.flush();
+            out.close();
+        } catch (FileNotFoundException e) {
+            throw new MojoFailureException(e.getMessage());
+        }
     }
 
     private void createWorkDir(Path workDir) throws MojoFailureException {
