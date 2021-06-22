@@ -65,6 +65,8 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
         }
 
         List<String> params = new ArrayList<String>();
+        params.add("--work-dir");
+        params.add(workspace.toString());
         params.add("--no-nodejs");
         params.add("--admin-rest-api");
         params.add("-1");
