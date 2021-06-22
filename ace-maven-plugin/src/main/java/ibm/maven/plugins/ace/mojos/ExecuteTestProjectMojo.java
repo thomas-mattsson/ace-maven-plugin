@@ -5,7 +5,10 @@ import ibm.maven.plugins.ace.utils.ProcessOutputLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +36,13 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
     protected String applicationName;
 
     /**
+     * The name of the BAR (compressed file format) archive file where the
+     * result is stored.
+     */
+    @Parameter(property = "ace.barName", defaultValue = "${project.build.directory}/ace/${project.artifactId}-${project.version}.bar", required = true)
+    protected File barName;
+
+    /**
      * Installation directory of the ace runtime
      */
     @Parameter(property = "ace.aceRunDir", required = true)
@@ -41,11 +51,54 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         
         if (EclipseProjectUtils.isTestProject(new File(workspace, applicationName), getLog())) {
-            executeTestProject();
+            Path workDir = null;
+            try {
+                workDir = Files.createTempDirectory(applicationName);
+                createWorkDir(workDir);
+                extractBarFile(workDir);
+                executeTestProject(workDir);
+            } catch (IOException e) {
+                throw new MojoFailureException(e.getLocalizedMessage());
+            } finally {
+                // Try to clean up
+                try {
+                    if (workDir != null) {
+                        Files.delete(workDir);
+                    }
+                } catch (IOException e) {}
+            }
+
         }    
     }
 
-    private void executeTestProject() throws MojoFailureException {
+    private void createWorkDir(Path workDir) throws MojoFailureException {
+        runCommand("mqsicreateworkdir", Collections.singletonList(workDir.toString()));
+    }
+
+    private void extractBarFile(Path workDir) throws MojoFailureException {
+        List<String> params = new ArrayList<String>(10);
+        params.add("--bar-file");
+        params.add(barName.toString());
+        params.add("--working-directory");
+        params.add(workDir.toString());
+        runCommand("mqsibar", params);
+    }
+
+    private void executeTestProject(Path workDir) throws MojoFailureException {
+
+        List<String> params = new ArrayList<String>();
+        params.add("--work-dir");
+        params.add(workDir.toString());
+        params.add("--no-nodejs");
+        params.add("--admin-rest-api");
+        params.add("-1");
+        params.add("--test-project");
+        params.add(applicationName);
+
+        runCommand("IntegrationServer", params);
+    }
+
+    private void runCommand(String cmd, List<String> params) throws MojoFailureException {
         // Check underlying operating system
         String osName = System.getProperty("os.name").toLowerCase();
         String executable = null;
@@ -55,34 +108,24 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
         List<String> command = new ArrayList<String>();
 
         if (osName.contains("windows")){
-            cmdFile = new File(System.getProperty("java.io.tmpdir") + File.separator + "readbarCommand-" + UUID.randomUUID() + ".cmd");
+            cmdFile = new File(System.getProperty("java.io.tmpdir") + File.separator + cmd + "Command-" + UUID.randomUUID() + ".cmd");
             cmdFile.deleteOnExit();
-            executable = aceRunDir + "/mqsiprofile&&IntegrationServer";
-        }else if(osName.contains("linux") || osName.contains("mac os x")){	
-            executable = ". " + aceRunDir + "/mqsiprofile && IntegrationServer";
-        }else {
+            executable = aceRunDir + "/mqsiprofile&&" + cmd;
+        } else if(osName.contains("linux") || osName.contains("mac os x")){	
+            executable = ". " + aceRunDir + "/mqsiprofile && " + cmd;
+        } else {
             throw new MojoFailureException("Unexpected OS: " + osName);
         }
-
-        List<String> params = new ArrayList<String>();
-        params.add("--work-dir");
-        params.add(workspace.toString());
-        //params.add("--no-nodejs");
-        params.add("--admin-rest-api");
-        params.add("-1");
-        params.add("--test-project");
-        params.add(applicationName);
 
         command.add(executable);
         command.addAll(params);
 
         if (getLog().isDebugEnabled()) {
             if (osName.contains("windows")){
-            getLog().debug("executing command file: " + cmdFile.getAbsolutePath());
+                getLog().debug("executing command file: " + cmdFile.getAbsolutePath());
             }
-            getLog().debug("IntegrationServer command: " + getCommandLine(command));
+            getLog().debug("Command: " + getCommandLine(command));
         }
-        getLog().info("IntegrationServer command: " + getCommandLine(command));
 
         if (osName.contains("windows")){
             try {
@@ -97,10 +140,10 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
 
         if (osName.contains("windows")){
             pb = new ProcessBuilder(cmdFile.getAbsolutePath());
-        }else if (osName.contains("linux") || osName.contains("mac os x")){
+        } else if (osName.contains("linux") || osName.contains("mac os x")){
             pb = new ProcessBuilder();
             pb.command("bash", "-c", getCommandLine(command));
-        }else {
+        } else {
             throw new MojoFailureException("Unexpected OS: " + osName);
         }
         // redirect subprocess stderr to stdout
@@ -131,10 +174,10 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
 
         if (process.exitValue() != 0) {
             // logOutputFile(outFile, "error");
-            throw new MojoFailureException("IntegrationServer finished with exit code: " + process.exitValue());
+            throw new MojoFailureException(cmd + " finished with exit code: " + process.exitValue());
         }
 
-        getLog().debug("IntegrationServer complete");
+        getLog().debug(cmd + " complete");
     }
 
     private String getCommandLine(List<String> command) {
