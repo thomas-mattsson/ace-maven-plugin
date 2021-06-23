@@ -56,6 +56,12 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
     @Parameter(property = "ace.fakeQueueManager", defaultValue = "true", required = true)
     protected Boolean fakeQueueManager;
 
+    /**
+     * Start message flows (false by default to allow tests on flows without starting them)
+     */
+    @Parameter(property = "ace.startFlows", defaultValue = "false", required = true)
+    protected Boolean startMessageFlows;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
         
         if (EclipseProjectUtils.isTestProject(new File(workspace, applicationName), getLog())) {
@@ -117,6 +123,8 @@ public class ExecuteTestProjectMojo extends AbstractMojo {
         params.add("-1");
         params.add("--test-project");
         params.add(applicationName);
+        params.add("--start-msgflows");
+        params.add(startMessageFlows.toString());
 
         runCommand("IntegrationServer", params);
     }
