@@ -1,5 +1,6 @@
 package ibm.maven.plugins.ace.mojos;
 
+import ibm.maven.plugins.ace.utils.CommandExecutionUtil;
 import ibm.maven.plugins.ace.utils.EclipseProjectUtils;
 import ibm.maven.plugins.ace.utils.ProcessOutputLogger;
 import ibm.maven.plugins.ace.utils.ZipUtils;
@@ -103,6 +104,12 @@ public class CreateBarMojo extends AbstractMojo {
      */
     @Parameter(property = "ace.skipWSErrorCheck", defaultValue = "false")
     protected Boolean skipWSErrorCheck;
+
+    /**
+     * Installation directory of the ace runtime
+     */
+    @Parameter(property = "ace.aceRunDir", required = true)
+    protected File aceRunDir;
 
     /**
      * Installation directory of the ace Toolkit
@@ -345,7 +352,11 @@ public class CreateBarMojo extends AbstractMojo {
         boolean packageBar = EclipseProjectUtils.isTestProject(new File(workspace, applicationName), getLog());
         List<String> params = constructParams(packageBar);
 
-        executeMqsiCreateBar(params, packageBar);
+        if (packageBar) {
+            CommandExecutionUtil.runCommand(aceRunDir, "mqsipackagebar", params, getLog());
+        } else {
+            executeMqsiCreateBar(params);
+        }
 
         try {
             // if classloaders are in use, all jars are to be removed
@@ -378,7 +389,7 @@ public class CreateBarMojo extends AbstractMojo {
      * @param params
      * @throws MojoFailureException If an exception occurs
      */
-    private void executeMqsiCreateBar(List<String> params, boolean packageBar)
+    private void executeMqsiCreateBar(List<String> params)
             throws MojoFailureException {
 
         File cmdFile = new File(System.getProperty("java.io.tmpdir")
@@ -391,7 +402,7 @@ public class CreateBarMojo extends AbstractMojo {
         // construct the command - very windows-centric for now
         List<String> command = new ArrayList<String>();
         String executable = "\"" + toolkitInstallDir + File.separator
-                + (packageBar ? "mqsipackagebar" : "mqsicreatebar") + "\"";
+                + "mqsicreatebar\"";
         command.add(executable);
         command.addAll(params);
         //command.add("> " + "D:\\DevOps\\createbaroutput.txt" + " 2>&1");
