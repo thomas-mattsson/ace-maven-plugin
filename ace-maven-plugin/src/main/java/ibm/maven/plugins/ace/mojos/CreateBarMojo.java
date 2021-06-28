@@ -1,5 +1,6 @@
 package ibm.maven.plugins.ace.mojos;
 
+import ibm.maven.plugins.ace.utils.CommandExecutionUtil;
 import ibm.maven.plugins.ace.utils.EclipseProjectUtils;
 import ibm.maven.plugins.ace.utils.ProcessOutputLogger;
 import ibm.maven.plugins.ace.utils.ZipUtils;
@@ -105,6 +106,12 @@ public class CreateBarMojo extends AbstractMojo {
     protected Boolean skipWSErrorCheck;
 
     /**
+     * Installation directory of the ace runtime
+     */
+    @Parameter(property = "ace.aceRunDir", required = true)
+    protected File aceRunDir;
+
+    /**
      * Installation directory of the ace Toolkit
      */
     @Parameter(property = "ace.toolkitInstallDir", required = true)
@@ -158,11 +165,12 @@ public class CreateBarMojo extends AbstractMojo {
     @Component
     protected BuildPluginManager buildPluginManager;
 
-    private List<String> addObjectsAppsLibs() throws MojoFailureException {
+    private List<String> addObjectsAppsLibs(boolean packageBar) throws MojoFailureException {
         List<String> params = new ArrayList<String>();
         List<String> apps = new ArrayList<String>();
         List<String> libs = new ArrayList<String>();
         List<String> policies = new ArrayList<String>();
+        List<String> testprojects = new ArrayList<String>();
 
         // loop through the projects, adding them as "-a" Applications, "-l"
         // libraries or the deployable artefacts as "-o" objects
@@ -174,13 +182,17 @@ public class CreateBarMojo extends AbstractMojo {
 
        //If the project is an application, add it as application else add it as library - Added below code on 08/06/2018
         //Updated the code to support PolicyProjects in ACE v11
-       
+
+        // If the project is a test project use mqsipackagebar instead
+
         if (EclipseProjectUtils.isApplication(new File(workspace, applicationName), getLog())) {
             apps.add(applicationName);
         } else if (EclipseProjectUtils.isLibrary(new File(workspace, applicationName), getLog())) {
             libs.add(applicationName);
-        }else if (EclipseProjectUtils.isPolicyProject(new File(workspace, applicationName), getLog())) {
+        } else if (EclipseProjectUtils.isPolicyProject(new File(workspace, applicationName), getLog())) {
         	policies.add(applicationName);
+        } else if (EclipseProjectUtils.isTestProject(new File(workspace, applicationName), getLog())) {
+            testprojects.add(applicationName);
         }
         
         //apps.add(applicationName);
@@ -211,15 +223,19 @@ public class CreateBarMojo extends AbstractMojo {
 
         // if there are applications, add them
         if (!apps.isEmpty()) {
-            params.add("-a");
+            params.add(packageBar ? "-k" : "-a");
             params.addAll(apps);
         }
 
-        
+        // if there are test projects, add them
+        if (!testprojects.isEmpty()) {
+            params.add("-t");
+            params.addAll(testprojects);
+        }
 
         // if there are libraries, add them
         if (!libs.isEmpty()) {
-            params.add("-l");
+            params.add(packageBar ? "-y" : "-l");
             params.addAll(libs);
         }
         
@@ -232,7 +248,7 @@ public class CreateBarMojo extends AbstractMojo {
         }
         
      // deployAsSource?
-        if (deployAsSource) {
+        if (deployAsSource && !packageBar) {
             params.add("-deployAsSource");
         }
 
@@ -247,19 +263,19 @@ public class CreateBarMojo extends AbstractMojo {
         return params;
     }
 
-    protected List<String> constructParams() throws MojoFailureException {
+    protected List<String> constructParams(boolean packageBar) throws MojoFailureException {
         List<String> params = new ArrayList<String>();
 
         // workspace parameter - required
         createWorkspaceDirectory();
-        params.add("-data");
+        params.add(packageBar ? "-w" : "-data");
         params.add(workspace.toString());
 
         // bar file name - required
-        params.add("-b");
+        params.add(packageBar ? "-a" : "-b");
         params.add(barName.getAbsolutePath());
 
-        if (cleanBuild) {
+        if (cleanBuild && !packageBar) {
             params.add("-cleanBuild");
         }
 
@@ -269,7 +285,7 @@ public class CreateBarMojo extends AbstractMojo {
         }*/
 
         // esql21 - optional
-        if (esql21) {
+        if (esql21 && !packageBar) {
             params.add("-esql21");
         }
 
@@ -294,14 +310,16 @@ public class CreateBarMojo extends AbstractMojo {
          */
 
         // object names - required
-        params.addAll(addObjectsAppsLibs());
+        params.addAll(addObjectsAppsLibs(packageBar));
 
-        if (skipWSErrorCheck) {
+        if (skipWSErrorCheck && !packageBar) {
             params.add("-skipWSErrorCheck");
         }
 
         // always trace into the file target/ace/mqsicreatebartrace.txt
-        params.add("-trace");
+        if (!packageBar) {
+            params.add("-trace");
+        }
         params.add("-v");
         params.add(createBarTraceFile.getAbsolutePath());
 
@@ -331,9 +349,14 @@ public class CreateBarMojo extends AbstractMojo {
             barDir.getParentFile().mkdirs();
         }
 
-        List<String> params = constructParams();
+        boolean packageBar = EclipseProjectUtils.isTestProject(new File(workspace, applicationName), getLog());
+        List<String> params = constructParams(packageBar);
 
-        executeMqsiCreateBar(params);
+        if (packageBar) {
+            CommandExecutionUtil.runCommand(aceRunDir, "mqsipackagebar", params, getLog());
+        } else {
+            executeMqsiCreateBar(params);
+        }
 
         try {
             // if classloaders are in use, all jars are to be removed

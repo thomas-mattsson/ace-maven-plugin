@@ -380,13 +380,11 @@ public class ValidateConfigurablePropertiesMojo extends AbstractMojo {
         	cmdFile = new File(System.getProperty("java.io.tmpdir") + File.separator + "readbarCommand-" + UUID.randomUUID() + ".cmd");
         	cmdFile.deleteOnExit();
         	executable = aceRunDir+"/mqsiprofile&&mqsiapplybaroverride";
-        	
-        }else if(osName.contains("linux")){
-        	
+        }else if(osName.contains("linux") || osName.contains("mac os x")){	
         	executable = ". "+aceRunDir+"/mqsiprofile&&mqsiapplybaroverride";
-        	
+        }else {
+            throw new MojoFailureException("Unexpected OS: " + osName);
         }
-        
       
         command.add(executable);
         command.addAll(params);
@@ -411,9 +409,11 @@ public class ValidateConfigurablePropertiesMojo extends AbstractMojo {
 
         if (osName.contains("windows")){
         	pb = new ProcessBuilder(cmdFile.getAbsolutePath());
-        }else if (osName.contains("linux")){
+        }else if (osName.contains("linux") || osName.contains("mac os x")){
         	pb = new ProcessBuilder();
         	pb.command("bash", "-c", getCommandLine(command));
+        }else {
+            throw new MojoFailureException("Unexpected OS: " + osName);
         }
         // redirect subprocess stderr to stdout
         pb.redirectErrorStream(true);
@@ -471,16 +471,14 @@ public class ValidateConfigurablePropertiesMojo extends AbstractMojo {
         	cmdFile = new File(System.getProperty("java.io.tmpdir") + File.separator + "readbarCommand-" + UUID.randomUUID() + ".cmd");
         	cmdFile.deleteOnExit();
         	executable = aceRunDir+"/mqsiprofile&&mqsireadbar";
-        	
-        }else if(osName.contains("linux")){
-        	
-        	executable = ". "+aceRunDir+"/mqsiprofile&&mqsireadbar";
-        	
+        }else if(osName.contains("linux") || osName.contains("mac os x")){
+        	executable = ". \""+aceRunDir+"/mqsiprofile\"&&mqsireadbar";
+        }else {
+            throw new MojoFailureException("Unexpected OS: " + osName);
         }
         
         command.add(executable);
         command.addAll(params);
-       
 
         if (getLog().isDebugEnabled()) {
         	if (osName.contains("windows")){
@@ -502,9 +500,11 @@ public class ValidateConfigurablePropertiesMojo extends AbstractMojo {
 
         if (osName.contains("windows")){
         	pb = new ProcessBuilder(cmdFile.getAbsolutePath());
-        }else if (osName.contains("linux")){
+        }else if (osName.contains("linux") || osName.contains("mac os x")){
         	pb = new ProcessBuilder();
         	pb.command("bash", "-c", getCommandLine(command));
+        } else {
+            throw new MojoFailureException("Unexpected OS: " + osName);
         }
 
         // redirect subprocess stderr to stdout

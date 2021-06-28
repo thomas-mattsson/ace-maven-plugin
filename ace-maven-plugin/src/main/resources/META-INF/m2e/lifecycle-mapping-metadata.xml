@@ -22,6 +22,7 @@
 					<goal>validate-bar-build-workspace</goal>
 					<goal>validate-classloader-approach</goal>
 					<goal>validate-configurable-properties</goal>
+					<goal>execute-test-project</goal>
 				</goals>
 			</pluginExecutionFilter>
 			<action>

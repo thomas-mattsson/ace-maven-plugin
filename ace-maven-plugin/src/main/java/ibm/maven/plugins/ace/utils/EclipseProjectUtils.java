@@ -146,7 +146,24 @@ public class EclipseProjectUtils {
         }
     }
 
+    /**
+     * @param projectDirectory the (workspace) directory containing the project
+     * @param log logger to be used if debugging information should be produced
+     * @return true if the project is an ace Policy project
+     * @throws MojoFailureException if something went wrong
+     */
+    public static boolean isTestProject(File projectDirectory, Log log) throws MojoFailureException {
 
+        List<String> natureList = getProjectDescription(projectDirectory).getNatures().getNature();
+        if (natureList
+                .contains("com.ibm.etools.msgbroker.tooling.testProjectNature")) {
+            log.debug(
+                    projectDirectory + " is an ace Policy project");
+            return true;
+        } else {
+            return false;
+        }
+    }
     
     /**
      * returns a java object containing the contents of the .project file
