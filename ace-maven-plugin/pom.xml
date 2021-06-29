@@ -329,22 +329,6 @@
 	</profiles>
 	<repositories>
 		<repository>
-			<id>central</id>
-			<name>Central Repository</name>
-			<url>http://127.0.0.1:8044/nexus/repository/maven-central/</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>nexus-release</id>
-			<name>Corporate Repository</name>
-			<url>http://127.0.0.1:8044/nexus/repository/releases/</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
 			<id>JBoss3rdParty</id>
 			<name>JBoss3rdParty</name>
 			<url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/</url>
@@ -355,27 +339,9 @@
 		<repository>
 			<id>centralImage</id>
 			<name>Central Repository</name>
-			<url>http://repo1.maven.org/maven2/</url>
+			<url>https://repo1.maven.org/maven2/</url>
 		</repository>
 	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>central</id>
-			<name>Central Repository</name>
-			<url>http://127.0.0.1:8044/nexus/repository/maven-central/</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-		<pluginRepository>
-			<id>nexus-release</id>
-			<name>Corporate Repository</name>
-			<url>http://127.0.0.1:8044/nexus/repository/releases/</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-	</pluginRepositories>
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -396,17 +362,7 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-	<distributionManagement>
-		<repository>
-			<id>releases</id>
-			<name>Corporate Repository</name>
-			<url>http://127.0.0.1:8044/nexus/repository/releases/</url>
-			<layout>default</layout>
-		</repository>
-
-	</distributionManagement>
 	<scm>
-               
 		<url>git@github.com:ot4i/ace-maven-plugin</url>
 		<connection>scm:git:git@github.com:ot4i/ace-maven-plugin</connection>
             <tag>HEAD</tag>
